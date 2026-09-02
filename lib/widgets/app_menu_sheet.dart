@@ -10,12 +10,12 @@ import '../services/translations.dart';
 /// share. All labels come from the `translations` table of the active
 /// database.
 class AppMenuSheet extends StatelessWidget {
-  final VoidCallback onOpenBookmarks;
+  final VoidCallback? onOpenBookmarks;
   final VoidCallback onShare;
 
   const AppMenuSheet({
     super.key,
-    required this.onOpenBookmarks,
+    this.onOpenBookmarks,
     required this.onShare,
   });
 
@@ -91,17 +91,18 @@ class AppMenuSheet extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.bookmark_outline, color: goldColor),
-              title: Text(
-                Translations.t('menu.bookmarks'),
-                style: TextStyle(color: textColor),
+            if (onOpenBookmarks != null)
+              ListTile(
+                leading: Icon(Icons.bookmark_outline, color: goldColor),
+                title: Text(
+                  Translations.t('menu.bookmarks'),
+                  style: TextStyle(color: textColor),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onOpenBookmarks!();
+                },
               ),
-              onTap: () {
-                Navigator.of(context).pop();
-                onOpenBookmarks();
-              },
-            ),
             ListTile(
               leading: Icon(Icons.share_outlined, color: goldColor),
               title: Text(

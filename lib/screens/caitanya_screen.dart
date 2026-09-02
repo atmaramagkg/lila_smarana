@@ -1,10 +1,12 @@
 // screens/caitanya_screen.dart
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../app_theme.dart';
 import '../models/caitanya_stotra_verse.dart';
 import '../services/bss_repository.dart';
 import '../services/translations.dart';
+import '../widgets/app_menu_sheet.dart';
 import 'caitanya_verse_detail_screen.dart';
 
 /// The Śrī Caitanya branch: the complete
@@ -42,7 +44,35 @@ class _CaitanyaScreenState extends State<CaitanyaScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(Translations.t('personality.caitanya.title')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: Translations.t('menu.share'),
+            onPressed: _verses.isEmpty ? null : _shareAll,
+          ),
+          IconButton(
+            icon: const Icon(Icons.menu),
+            tooltip: Translations.t('common.menu'),
+            onPressed: _openAppMenu,
+          ),
+        ],
       ),
+      floatingActionButton: _verses.isNotEmpty
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CaitanyaVerseDetailScreen(
+                      verses: _verses,
+                      initialIndex: 0,
+                    ),
+                  ),
+                );
+              },
+              tooltip: 'Read stotram',
+              child: const Icon(Icons.auto_stories),
+            )
+          : null,
       body: FutureBuilder<List<CaitanyaStotraVerse>>(
         future: _future,
         builder: (context, snapshot) {
@@ -163,5 +193,35 @@ class _CaitanyaScreenState extends State<CaitanyaScreen> {
     };
     final key = codes[code];
     return key == null ? null : Translations.t(key);
+  }
+
+  void _shareAll() {
+    final buffer = StringBuffer();
+    for (final v in _verses) {
+      if (v.heading.isNotEmpty) buffer.writeln('${v.heading}\n');
+      if (v.transliteration.isNotEmpty) buffer.writeln('${v.transliteration}\n');
+      buffer.writeln('${v.translationEn}\n');
+    }
+    SharePlus.instance.share(ShareParams(text: buffer.toString()));
+  }
+
+  void _openAppMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => Material(
+        color: Theme.of(sheetContext).scaffoldBackgroundColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: AppMenuSheet(
+          onShare: _shareAll,
+        ),
+      ),
+    );
   }
 }
