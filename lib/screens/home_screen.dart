@@ -6,12 +6,13 @@ import '../services/bss_repository.dart';
 import '../services/translations.dart';
 import 'reading_screen.dart';
 import 'caitanya_screen.dart';
+import 'prabhupada_screen.dart';
 import 'coming_soon_screen.dart';
 
 /// Entry point showing the four spiritual personalities ("branches") of the
 /// lila-smarana library. Tapping one enters that personality's content.
-/// Caitanya and Rādhā–Kṛṣṇa are populated; Mañjarī and Prabhupāda open a
-/// "coming soon" notice until their data is imported.
+/// Caitanya, Rādhā–Kṛṣṇa and Śrīla Prabhupāda are populated; Mañjarī opens a
+/// "coming soon" notice until its data is imported.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -84,7 +85,7 @@ class _PersonalityHome extends StatelessWidget {
         title: Translations.t('personality.prabhupada.title'),
         subtitle: Translations.t('personality.prabhupada.subtitle'),
         icon: Icons.account_balance,
-        enabled: false,
+        enabled: true,
       ),
     ];
 
@@ -147,8 +148,13 @@ class _PersonalityHome extends StatelessWidget {
         );
       case 'radha-krsna':
         _openRadhaKrsna(context);
-      case 'manjari':
       case 'prabhupada':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PrabhupadaScreen(repository: repository),
+          ),
+        );
+      case 'manjari':
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ComingSoonScreen(

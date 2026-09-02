@@ -5,6 +5,7 @@ import '../models/book.dart';
 import '../models/verse.dart';
 import '../models/danda.dart';
 import '../models/caitanya_stotra_verse.dart';
+import '../models/prabhupada_stotra_verse.dart';
 import 'translations.dart';
 
 class SubPeriod {
@@ -637,6 +638,18 @@ class BssRepository {
       orderBy: 'sort_order ASC',
     );
     return rows.map(CaitanyaStotraVerse.fromMap).toList();
+  }
+
+  /// All sections of the Śrīla Prabhupāda branch stotram
+  /// ("Srila Prabhupada Lila-Smarana-Mangala-Stotram"), in reading order.
+  /// Each row is one printed verse group (some groups bundle several Bengali
+  /// verses that share a single English translation).
+  Future<List<PrabhupadaStotraVerse>> getPrabhupadaStotram() async {
+    final List<Map<String, dynamic>> rows = await db.query(
+      'prabhupada_stotram',
+      orderBy: 'sort_order ASC',
+    );
+    return rows.map(PrabhupadaStotraVerse.fromMap).toList();
   }
 
   /// Finds a verse by book slug and verse ref (e.g. 'govinda-lilamrta' + '1.107').
