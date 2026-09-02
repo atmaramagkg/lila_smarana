@@ -54,3 +54,8 @@ proposed_citations.csv
 scripts/
 tools/
 __pycache__/
+
+# Source artifacts from the original project's import pipeline - not needed
+# at runtime, kept in the original repo (C:\Users\austr\bss).
+assets/db/Lila_Smarana.vidya
+assets/texts/
