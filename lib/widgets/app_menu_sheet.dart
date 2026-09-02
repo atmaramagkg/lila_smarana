@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../core/database/app_database.dart';
+import '../screens/about_screen.dart';
 import '../services/app_settings.dart';
 import '../services/translations.dart';
 
@@ -110,6 +111,19 @@ class AppMenuSheet extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pop();
                 onShare();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.info_outline, color: goldColor),
+              title: Text(
+                'About',
+                style: TextStyle(color: textColor),
+              ),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AboutScreen()),
+                );
               },
             ),
           ],

@@ -6,6 +6,7 @@ import '../services/bss_repository.dart';
 import '../services/translations.dart';
 import 'reading_screen.dart';
 import 'caitanya_screen.dart';
+import 'coming_soon_screen.dart';
 
 /// Entry point showing the four spiritual personalities ("branches") of the
 /// lila-smarana library. Tapping one enters that personality's content.
@@ -121,9 +122,7 @@ class _PersonalityHome extends StatelessWidget {
                   for (final personality in personalities) ...[
                     _PersonalityCard(
                       personality: personality,
-                      onTap: personality.enabled
-                          ? () => _openPersonality(context, personality)
-                          : () => _showComingSoon(context),
+                      onTap: () => _openPersonality(context, personality),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -148,6 +147,17 @@ class _PersonalityHome extends StatelessWidget {
         );
       case 'radha-krsna':
         _openRadhaKrsna(context);
+      case 'manjari':
+      case 'prabhupada':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ComingSoonScreen(
+              title: personality.title,
+              subtitle: personality.subtitle,
+              icon: personality.icon,
+            ),
+          ),
+        );
     }
   }
 
@@ -164,15 +174,6 @@ class _PersonalityHome extends StatelessWidget {
           initialPeriodId: current?.mainPeriodId ?? 1,
           initialSubPeriodId: current?.subPeriodId,
         ),
-      ),
-    );
-  }
-
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(Translations.t('personality.comingSoon')),
-        duration: const Duration(seconds: 2),
       ),
     );
   }

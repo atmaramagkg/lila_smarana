@@ -5,6 +5,7 @@ import '../app_theme.dart';
 import '../models/caitanya_stotra_verse.dart';
 import '../services/bss_repository.dart';
 import '../services/translations.dart';
+import 'caitanya_verse_detail_screen.dart';
 
 /// The Śrī Caitanya branch: the complete
 /// "Sriman Mahaprabhor asta-kaliya lila smarana mangala stotram"
@@ -21,11 +22,15 @@ class CaitanyaScreen extends StatefulWidget {
 
 class _CaitanyaScreenState extends State<CaitanyaScreen> {
   late Future<List<CaitanyaStotraVerse>> _future;
+  List<CaitanyaStotraVerse> _verses = const [];
 
   @override
   void initState() {
     super.initState();
-    _future = widget.repository.getCaitanyaStotram();
+    _future = widget.repository.getCaitanyaStotram().then((v) {
+      if (mounted) setState(() => _verses = v);
+      return v;
+    });
   }
 
   @override
@@ -67,7 +72,19 @@ class _CaitanyaScreenState extends State<CaitanyaScreen> {
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(color: goldColor.withAlpha(50)),
                   ),
-                  child: Padding(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CaitanyaVerseDetailScreen(
+                            verses: _verses,
+                            initialIndex: index,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,6 +137,7 @@ class _CaitanyaScreenState extends State<CaitanyaScreen> {
                       ],
                     ),
                   ),
+                ),
                 );
               },
             ),
