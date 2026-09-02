@@ -1,0 +1,54 @@
+Changes relative to Lila_Smarana_0821_B.zip
+=============================================
+
+MODIFIED (included in this zip):
+  lib/models/verse.dart
+    - translationForCode(): en/ru now fall back to transliteration instead
+      of returning '' when the prose translation is missing.
+    - added displayCitation getter (falls back to refDisplay when
+      sourceRefs is empty, instead of hiding the citation entirely).
+
+  lib/screens/verse_detail_screen.dart
+    - uses verse.displayCitation instead of inline bookId/sourceRefs logic.
+
+  lib/screens/reading_screen.dart
+    - both the share-text and continuous-feed citation displays use
+      verse.displayCitation instead of inline bookId/sourceRefs logic.
+
+  lib/services/bss_repository.dart
+    - getVerseIdByBookAndRef(): now matches the verse locator exactly
+      instead of via a bare substring LIKE search (which could jump to
+      the wrong verse ~4% of the time); returns null on no exact match
+      instead of guessing.
+    - VerseDetail: same translationForCode + displayCitation additions
+      as models/verse.dart above.
+
+ADDED (included in this zip):
+  tools/check_data_consistency.py
+    - updated with a source_refs ambiguous-match check and a completeness
+      note on unresolved source_refs.
+
+  tools/derive_citations_from_source.py
+    - new: parses the reference transliteration document and content-matches
+      it against every verse currently mislabeled "Bhāvanāra-saṅgraha"
+      (book_id IS NULL) to propose a real citation. Produces
+      proposed_citations.csv (delivered separately, not bundled here since
+      it's a data file, not source).
+      Usage:
+        python3 tools/derive_citations_from_source.py \
+          assets/db/Bhavanasara-Sangraha.sqlite \
+          sanskrit_transliteration.txt \
+          proposed_citations.csv
+
+DELETED (not present in this zip — delete these from your project):
+  lib/core/constants.dart
+  lib/models/citation.dart
+  lib/models/quote.dart
+  lib/services/csv_import_service.dart
+  (all dead/unused code; csv_import_service.dart also referenced tables
+  that don't exist in the current schema)
+
+UNCHANGED:
+  Everything else, including pubspec.yaml, app_database.dart,
+  language_code.dart, and the .sqlite asset — all already matched between
+  your last upload and this working copy, so they're omitted here too.

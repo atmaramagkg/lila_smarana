@@ -1,0 +1,55 @@
+name: lila_smarana
+description: "Quotes form 30 scriptures related to Asta-kaliya Lila."
+publish_to: 'none' 
+version: 0.73.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.2
+  go_router: ^17.3.0
+  sqflite: ^2.4.3
+  sqflite_common_ffi: ^2.4.2
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  intl: 0.20.2 # Pinned to match flutter_localizations from the Flutter SDK
+  scrollable_positioned_list: ^0.3.8
+  shared_preferences: ^2.5.3
+  share_plus: ^13.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+# Launcher icon configuration MUST be at the root level
+flutter_launcher_icons:
+  image_path: "assets/icon/AppLogo.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
+  assets:
+
+    - assets/db/
+    - assets/icon/
+    
+  fonts:
+    - family: NotoSerif
+      fonts:
+        - asset: assets/fonts/NotoSerif-Regular.ttf
+        - asset: assets/fonts/NotoSerif-Bold.ttf
+          weight: 700
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
