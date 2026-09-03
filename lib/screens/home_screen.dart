@@ -66,6 +66,7 @@ class _PersonalityHome extends StatelessWidget {
         id: 'caitanya',
         title: Translations.t('personality.caitanya.title'),
         subtitle: Translations.t('personality.caitanya.subtitle'),
+        imagePath: 'assets/icon/caitanya.png',
         icon: Icons.self_improvement,
         enabled: true,
       ),
@@ -73,6 +74,7 @@ class _PersonalityHome extends StatelessWidget {
         id: 'radha-krsna',
         title: Translations.t('personality.radha-krsna.title'),
         subtitle: Translations.t('personality.radha-krsna.subtitle'),
+        imagePath: 'assets/icon/rk.png',
         icon: Icons.spa,
         enabled: true,
       ),
@@ -80,6 +82,7 @@ class _PersonalityHome extends StatelessWidget {
         id: 'manjari',
         title: Translations.t('personality.mañjarī.title'),
         subtitle: Translations.t('personality.mañjarī.subtitle'),
+        imagePath: 'assets/icon/manjari.png',
         icon: Icons.local_florist,
         enabled: false,
       ),
@@ -87,6 +90,7 @@ class _PersonalityHome extends StatelessWidget {
         id: 'prabhupada',
         title: Translations.t('personality.prabhupada.title'),
         subtitle: Translations.t('personality.prabhupada.subtitle'),
+        imagePath: 'assets/icon/prabhupada.png',
         icon: Icons.account_balance,
         enabled: true,
       ),
@@ -222,6 +226,7 @@ class _Personality {
   final String id;
   final String title;
   final String subtitle;
+  final String? imagePath;
   final IconData icon;
   final bool enabled;
 
@@ -229,6 +234,7 @@ class _Personality {
     required this.id,
     required this.title,
     required this.subtitle,
+    required this.imagePath,
     required this.icon,
     required this.enabled,
   });
@@ -262,11 +268,23 @@ class _PersonalityCard extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Icon(
-          personality.icon,
-          color: goldColor,
-          size: 36,
-        ),
+        leading: personality.imagePath != null
+            ? Opacity(
+                opacity: personality.enabled ? 1.0 : 0.35,
+                child: Image.asset(
+                  personality.imagePath!,
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Icon(personality.icon, color: goldColor, size: 36),
+                ),
+              )
+            : Icon(
+                personality.icon,
+                color: goldColor,
+                size: 36,
+              ),
         title: Text(
           personality.title,
           style: TextStyle(
