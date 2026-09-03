@@ -42,7 +42,7 @@ class AboutScreen extends StatelessWidget {
             children: [
               _Row(Icons.self_improvement, 'Śrī Caitanya — Aṣṭa-kālīya līlā-smaraṇa stotram'),
               _Row(Icons.spa, 'Rādhā–Kṛṣṇa — Bhāvanāsara-saṅgraha (time-of-day reader)'),
-              _Row(Icons.local_florist, 'Mañjarī Sevā — Mañjarī-svarūpa-nirūpaṇa by Śrīla Bhaktivinoda Ṭhākura'),
+              _Row(Icons.local_florist, 'Mañjarī Sevā — Mañjarī-svarūpa-nirūpaṇa by Śrīla Kunja-bihārī Dāsa Bābājī'),
               _Row(Icons.account_balance, 'Śrīla Prabhupāda — Śrīla Prabhupāda līlā-smaraṇa'),
             ],
           ),
