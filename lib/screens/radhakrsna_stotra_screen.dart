@@ -249,6 +249,64 @@ class _RadhaKrsnaStotraDetailScreenState
     return out.trim();
   }
 
+  /// Parses the stored word-meaning gloss (`word --meaning; word --meaning; ...`)
+  /// into ordered `(sanskrit, translation)` pairs. Each semicolon-delimited
+  /// gloss carries exactly one `--`, so a single split is safe.
+  static List<(String, String)> _parseGlosses(String gloss) {
+    final pairs = <(String, String)>[];
+    for (final raw in gloss.split(';')) {
+      final token = raw.trim();
+      if (token.isEmpty) continue;
+      final idx = token.indexOf('--');
+      if (idx < 0) {
+        pairs.add(('', token));
+        continue;
+      }
+      pairs.add((token.substring(0, idx).trim(), token.substring(idx + 2).trim()));
+    }
+    return pairs;
+  }
+
+  /// Builds the inline spans for the word-by-word gloss: each Sanskrit word
+  /// is set in italic with the accent colour, and its English translation in
+  /// the plain body colour, separated from the next gloss by a `;`.
+  static List<InlineSpan> _glossSpans(
+    List<(String, String)> pairs,
+    bool isDark,
+  ) {
+    final sanskritColor =
+        isDark ? BssColors.darkOakSanskritText : BssColors.sanskritText;
+    final bodyColor = isDark ? BssColors.darkOakText : BssColors.darkText;
+    final sepColor = isDark ? BssColors.darkOakSubText : BssColors.subText;
+
+    final spans = <InlineSpan>[];
+    for (var i = 0; i < pairs.length; i++) {
+      final (sanskrit, translation) = pairs[i];
+      if (sanskrit.isNotEmpty) {
+        spans.add(
+          TextSpan(
+            text: sanskrit,
+            style: TextStyle(
+              color: sanskritColor,
+              fontWeight: FontWeight.w600,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        );
+        if (translation.isNotEmpty) {
+          spans.add(const TextSpan(text: ' — '));
+        }
+      }
+      if (translation.isNotEmpty) {
+        spans.add(TextSpan(text: translation, style: TextStyle(color: bodyColor)));
+      }
+      if (i < pairs.length - 1) {
+        spans.add(TextSpan(text: ';  ', style: TextStyle(color: sepColor)));
+      }
+    }
+    return spans;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -293,8 +351,8 @@ class _RadhaKrsnaStotraDetailScreenState
                     ),
                     const SizedBox(height: 20),
                     if (v.wordMeanings.isNotEmpty) ...[
-                      Text(
-                        v.wordMeanings,
+                      Text.rich(
+                        TextSpan(children: _glossSpans(_parseGlosses(v.wordMeanings), isDark)),
                         style: TextStyle(
                           fontSize: 14,
                           height: 1.5,
