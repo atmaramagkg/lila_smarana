@@ -181,7 +181,17 @@ class _PersonalityHome extends StatelessWidget {
       case 'manjari':
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ManjariScreen(repository: repository),
+            builder: (_) => WorksMenuScreen(
+              title: personality.title,
+              works: [
+                WorkEntry(
+                  title: Translations.t('works.manjari.nirupana'),
+                  subtitle: Translations.t('works.manjari.nirupanaSub'),
+                  icon: Icons.menu_book,
+                  builder: (_) => ManjariScreen(repository: repository),
+                ),
+              ],
+            ),
           ),
         );
     }
