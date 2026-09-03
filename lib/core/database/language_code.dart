@@ -1,5 +1,5 @@
 /// Language codes that exist as real columns on the `translations` table
-/// (see assets/db/Bhavanasara-Sangraha.sqlite: en, ru).
+/// (see assets/db/Lila_Smarana.sqlite: en, ru).
 /// Hindi data remains in the DB but is currently disabled in the UI.
 ///
 /// The selected language code is read back from `app_settings` and then

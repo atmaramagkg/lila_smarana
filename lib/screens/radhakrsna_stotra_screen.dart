@@ -1,36 +1,47 @@
-// screens/prabhupada_screen.dart
+// screens/radhakrsna_stotra_screen.dart
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../app_theme.dart';
-import '../models/prabhupada_stotra_verse.dart';
+import '../models/radhakrsna_stotra_verse.dart';
 import '../services/bss_repository.dart';
 import '../services/translations.dart';
 import '../widgets/app_menu_sheet.dart';
 
-/// The Śrīla Prabhupāda branch: the complete
-/// "Srila Prabhupada Lila-Smarana-Mangala-Stotram" with Bengali
-/// transliteration and English translation, in reading order.
-class PrabhupadaScreen extends StatefulWidget {
+/// The Śrī Rādhā-Kṛṣṇayoḥ Aṣṭa-kālīya-līlā Smaraṇa-maṅgala-śrotram:
+/// eight periods of the divine couple's daily routine. Each period carries
+/// a romanized Sanskrit verse, a word-by-word gloss, and an English prose
+/// translation. The list pane shows the translation; verse and word
+/// meanings appear in the swipeable detail reader.
+class RadhaKrsnaStotraScreen extends StatefulWidget {
   final BssRepository repository;
 
-  const PrabhupadaScreen({super.key, required this.repository});
+  const RadhaKrsnaStotraScreen({super.key, required this.repository});
 
   @override
-  State<PrabhupadaScreen> createState() => _PrabhupadaScreenState();
+  State<RadhaKrsnaStotraScreen> createState() => _RadhaKrsnaStotraScreenState();
 }
 
-class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
-  late Future<List<PrabhupadaStotraVerse>> _future;
-  List<PrabhupadaStotraVerse> _verses = const [];
+class _RadhaKrsnaStotraScreenState extends State<RadhaKrsnaStotraScreen> {
+  late Future<List<RadhaKrsnaStotraVerse>> _future;
+  List<RadhaKrsnaStotraVerse> _verses = const [];
 
   @override
   void initState() {
     super.initState();
-    _future = widget.repository.getPrabhupadaStotram().then((v) {
+    _future = widget.repository.getRadhaKrsnaStotram().then((v) {
       if (mounted) setState(() => _verses = v);
       return v;
     });
+  }
+
+  /// Strips a leading/trailing double-quote (present around translations
+  /// in the printed source) before display.
+  static String _clean(String s) {
+    var out = s.trim();
+    if (out.startsWith('"')) out = out.substring(1);
+    if (out.endsWith('"')) out = out.substring(0, out.length - 1);
+    return out.trim();
   }
 
   @override
@@ -41,7 +52,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(Translations.t('personality.prabhupada.title')),
+        title: const Text('Rādhā-Kṛṣṇayoḥ stotram'),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -60,7 +71,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => PrabhupadaVerseDetailScreen(
+                    builder: (_) => RadhaKrsnaStotraDetailScreen(
                       verses: _verses,
                       initialIndex: 0,
                     ),
@@ -71,7 +82,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
               child: const Icon(Icons.auto_stories),
             )
           : null,
-      body: FutureBuilder<List<PrabhupadaStotraVerse>>(
+      body: FutureBuilder<List<RadhaKrsnaStotraVerse>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -104,7 +115,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => PrabhupadaVerseDetailScreen(
+                          builder: (_) => RadhaKrsnaStotraDetailScreen(
                             verses: _verses,
                             initialIndex: index,
                           ),
@@ -120,7 +131,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                v.ref,
+                                v.period,
                                 style: TextStyle(
                                   color: goldColor,
                                   fontSize: 12,
@@ -143,7 +154,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            v.translationEn,
+                            _clean(v.translationEn),
                             style: TextStyle(
                               color: textColor,
                               fontSize: 14,
@@ -166,11 +177,12 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
   void _shareAll() {
     final buffer = StringBuffer();
     for (final v in _verses) {
-      buffer.writeln('(${v.ref}) ${v.heading}\n');
-      if (v.transliteration.isNotEmpty) {
-        buffer.writeln('${v.transliteration}\n');
+      buffer.writeln('${v.heading}\n');
+      if (v.verse.isNotEmpty) buffer.writeln('${v.verse}\n');
+      if (v.wordMeanings.isNotEmpty) {
+        buffer.writeln('${v.wordMeanings}\n');
       }
-      buffer.writeln('${v.translationEn}\n');
+      buffer.writeln('${_clean(v.translationEn)}\n');
     }
     SharePlus.instance.share(ShareParams(text: buffer.toString()));
   }
@@ -188,32 +200,32 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         clipBehavior: Clip.antiAlias,
-        child: AppMenuSheet(
-          onShare: _shareAll,
-        ),
+        child: AppMenuSheet(onShare: _shareAll),
       ),
     );
   }
 }
 
-/// Full-screen reading mode: swipeable pages, one verse group per page.
-class PrabhupadaVerseDetailScreen extends StatefulWidget {
-  final List<PrabhupadaStotraVerse> verses;
+/// Full-screen reading mode for the Rādhā–Kṛṣṇayoḥ stotram: swipeable
+/// pages, one period per page, showing the Sanskrit verse, word-by-word
+/// meanings, and English translation.
+class RadhaKrsnaStotraDetailScreen extends StatefulWidget {
+  final List<RadhaKrsnaStotraVerse> verses;
   final int initialIndex;
 
-  const PrabhupadaVerseDetailScreen({
+  const RadhaKrsnaStotraDetailScreen({
     super.key,
     required this.verses,
     this.initialIndex = 0,
   });
 
   @override
-  State<PrabhupadaVerseDetailScreen> createState() =>
-      _PrabhupadaVerseDetailScreenState();
+  State<RadhaKrsnaStotraDetailScreen> createState() =>
+      _RadhaKrsnaStotraDetailScreenState();
 }
 
-class _PrabhupadaVerseDetailScreenState
-    extends State<PrabhupadaVerseDetailScreen> {
+class _RadhaKrsnaStotraDetailScreenState
+    extends State<RadhaKrsnaStotraDetailScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
 
@@ -230,6 +242,13 @@ class _PrabhupadaVerseDetailScreenState
     super.dispose();
   }
 
+  static String _clean(String s) {
+    var out = s.trim();
+    if (out.startsWith('"')) out = out.substring(1);
+    if (out.endsWith('"')) out = out.substring(0, out.length - 1);
+    return out.trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -238,7 +257,7 @@ class _PrabhupadaVerseDetailScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(Translations.t('personality.prabhupada.title')),
+        title: const Text('Rādhā-Kṛṣṇayoḥ stotram'),
       ),
       body: Column(
         children: [
@@ -252,39 +271,33 @@ class _PrabhupadaVerseDetailScreenState
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '(${v.ref})',
-                          style: TextStyle(
-                            color: goldColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            v.heading,
-                            style: TextStyle(
-                              color: goldColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      v.heading,
+                      style: TextStyle(
+                        color: goldColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    if (v.transliteration.isNotEmpty) ...[
+                    Text(
+                      v.verse,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.6,
+                        color: isDark
+                            ? BssColors.darkOakSanskritText
+                            : BssColors.sanskritText,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (v.wordMeanings.isNotEmpty) ...[
                       Text(
-                        v.transliteration,
+                        v.wordMeanings,
                         style: TextStyle(
-                          fontSize: 16,
-                          height: 1.6,
-                          fontStyle: FontStyle.italic,
+                          fontSize: 14,
+                          height: 1.5,
                           color: isDark
                               ? BssColors.darkOakSanskritText
                               : BssColors.sanskritText,
@@ -293,7 +306,7 @@ class _PrabhupadaVerseDetailScreenState
                       const SizedBox(height: 20),
                     ],
                     Text(
-                      v.translationEn,
+                      _clean(v.translationEn),
                       style: TextStyle(
                         fontSize: 17,
                         height: 1.5,

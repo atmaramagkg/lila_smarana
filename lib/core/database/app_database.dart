@@ -23,7 +23,7 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   static const String _assetPath =
-      'assets/db/Bhavanasara-Sangraha.sqlite';
+      'assets/db/Lila_Smarana.sqlite';
   static const String _dbFileName = 'bhavanasara_unified.db';
 
   Database? _db;

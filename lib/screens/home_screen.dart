@@ -7,7 +7,10 @@ import '../services/translations.dart';
 import 'reading_screen.dart';
 import 'caitanya_screen.dart';
 import 'prabhupada_screen.dart';
+import 'gauranga_screen.dart';
+import 'radhakrsna_stotra_screen.dart';
 import 'coming_soon_screen.dart';
+import 'works_menu_screen.dart';
 
 /// Entry point showing the four spiritual personalities ("branches") of the
 /// lila-smarana library. Tapping one enters that personality's content.
@@ -137,17 +140,34 @@ class _PersonalityHome extends StatelessWidget {
   }
 
   /// Opens the reader for the selected personality branch. Only branches
-  /// whose data has been imported are enabled.
+  /// whose data has been imported are enabled. Branches holding more than
+  /// one work open a works submenu; single-work branches open directly.
   void _openPersonality(BuildContext context, _Personality personality) {
     switch (personality.id) {
       case 'caitanya':
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => CaitanyaScreen(repository: repository),
+            builder: (_) => WorksMenuScreen(
+              title: personality.title,
+              works: [
+                WorkEntry(
+                  title: Translations.t('works.caitanya.asta'),
+                  subtitle: Translations.t('works.caitanya.astaSub'),
+                  icon: Icons.auto_stories,
+                  builder: (_) => CaitanyaScreen(repository: repository),
+                ),
+                WorkEntry(
+                  title: Translations.t('works.caitanya.gauranga'),
+                  subtitle: Translations.t('works.caitanya.gaurangaSub'),
+                  icon: Icons.self_improvement,
+                  builder: (_) => GaurangaScreen(repository: repository),
+                ),
+              ],
+            ),
           ),
         );
       case 'radha-krsna':
-        _openRadhaKrsna(context);
+        _openRadhaKrsna(context, personality);
       case 'prabhupada':
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -167,18 +187,31 @@ class _PersonalityHome extends StatelessWidget {
     }
   }
 
-  /// Rādhā–Kṛṣṇa: open the time-of-day reader (same flow the app used to
-  /// jump to directly).
-  Future<void> _openRadhaKrsna(BuildContext context) async {
-    final current =
-        await repository.getCurrentPeriodPair();
-    if (!context.mounted) return;
+  /// Rādhā–Kṛṣṇa: two works — the aṣṭa-kālīya stotram and the
+  /// Bhavanasara-sangraha time-of-day reader.
+  void _openRadhaKrsna(BuildContext context, _Personality personality) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ReadingScreen(
-          repository: repository,
-          initialPeriodId: current?.mainPeriodId ?? 1,
-          initialSubPeriodId: current?.subPeriodId,
+        builder: (_) => WorksMenuScreen(
+          title: personality.title,
+          works: [
+            WorkEntry(
+              title: Translations.t('works.radhaKrsna.stotram'),
+              subtitle: Translations.t('works.radhaKrsna.stotramSub'),
+              icon: Icons.spa,
+              builder: (_) =>
+                  RadhaKrsnaStotraScreen(repository: repository),
+            ),
+            WorkEntry(
+              title: Translations.t('works.radhaKrsna.bss'),
+              subtitle: Translations.t('works.radhaKrsna.bssSub'),
+              icon: Icons.schedule,
+              builder: (_) => ReadingScreen(
+                repository: repository,
+                initialPeriodId: 1,
+              ),
+            ),
+          ],
         ),
       ),
     );

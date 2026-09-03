@@ -142,20 +142,6 @@ class _CaitanyaScreenState extends State<CaitanyaScreen> {
                           ),
                           const SizedBox(height: 8),
                         ],
-                        if (v.transliteration.isNotEmpty) ...[
-                          Text(
-                            v.transliteration,
-                            style: TextStyle(
-                              color: isDark
-                                  ? BssColors.darkOakSanskritText
-                                  : BssColors.sanskritText,
-                              fontSize: 14,
-                              height: 1.5,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
                         Text(
                           v.translationEn,
                           style: TextStyle(

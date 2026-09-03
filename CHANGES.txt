@@ -36,7 +36,7 @@ ADDED (included in this zip):
       it's a data file, not source).
       Usage:
         python3 tools/derive_citations_from_source.py \
-          assets/db/Bhavanasara-Sangraha.sqlite \
+          assets/db/Lila_Smarana.sqlite \
           sanskrit_transliteration.txt \
           proposed_citations.csv
 

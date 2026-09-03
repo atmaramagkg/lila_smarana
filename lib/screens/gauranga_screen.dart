@@ -1,33 +1,34 @@
-// screens/prabhupada_screen.dart
+// screens/gauranga_screen.dart
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../app_theme.dart';
-import '../models/prabhupada_stotra_verse.dart';
+import '../models/gauranga_stotra_verse.dart';
 import '../services/bss_repository.dart';
 import '../services/translations.dart';
 import '../widgets/app_menu_sheet.dart';
 
-/// The Śrīla Prabhupāda branch: the complete
-/// "Srila Prabhupada Lila-Smarana-Mangala-Stotram" with Bengali
-/// transliteration and English translation, in reading order.
-class PrabhupadaScreen extends StatefulWidget {
+/// The Śrī Śrīmad Gaurāṅga-līlā-smaraṇa-maṅgala-stotram by Śrīla
+/// Bhaktivinoda Ṭhākura (104 verses). The list pane shows the English
+/// translation; the Devanāgarī, IAST transliteration, and translation are
+/// revealed in the swipeable detail reader.
+class GaurangaScreen extends StatefulWidget {
   final BssRepository repository;
 
-  const PrabhupadaScreen({super.key, required this.repository});
+  const GaurangaScreen({super.key, required this.repository});
 
   @override
-  State<PrabhupadaScreen> createState() => _PrabhupadaScreenState();
+  State<GaurangaScreen> createState() => _GaurangaScreenState();
 }
 
-class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
-  late Future<List<PrabhupadaStotraVerse>> _future;
-  List<PrabhupadaStotraVerse> _verses = const [];
+class _GaurangaScreenState extends State<GaurangaScreen> {
+  late Future<List<GaurangaStotraVerse>> _future;
+  List<GaurangaStotraVerse> _verses = const [];
 
   @override
   void initState() {
     super.initState();
-    _future = widget.repository.getPrabhupadaStotram().then((v) {
+    _future = widget.repository.getGaurangaStotram().then((v) {
       if (mounted) setState(() => _verses = v);
       return v;
     });
@@ -41,7 +42,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(Translations.t('personality.prabhupada.title')),
+        title: const Text('Śrī Gaurāṅga stotram'),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -60,7 +61,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => PrabhupadaVerseDetailScreen(
+                    builder: (_) => GaurangaVerseDetailScreen(
                       verses: _verses,
                       initialIndex: 0,
                     ),
@@ -71,7 +72,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
               child: const Icon(Icons.auto_stories),
             )
           : null,
-      body: FutureBuilder<List<PrabhupadaStotraVerse>>(
+      body: FutureBuilder<List<GaurangaStotraVerse>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -104,7 +105,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => PrabhupadaVerseDetailScreen(
+                          builder: (_) => GaurangaVerseDetailScreen(
                             verses: _verses,
                             initialIndex: index,
                           ),
@@ -120,7 +121,7 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                v.ref,
+                                '(${v.ref})',
                                 style: TextStyle(
                                   color: goldColor,
                                   fontSize: 12,
@@ -188,32 +189,31 @@ class _PrabhupadaScreenState extends State<PrabhupadaScreen> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         clipBehavior: Clip.antiAlias,
-        child: AppMenuSheet(
-          onShare: _shareAll,
-        ),
+        child: AppMenuSheet(onShare: _shareAll),
       ),
     );
   }
 }
 
-/// Full-screen reading mode: swipeable pages, one verse group per page.
-class PrabhupadaVerseDetailScreen extends StatefulWidget {
-  final List<PrabhupadaStotraVerse> verses;
+/// Full-screen reading mode for the Gaurāṅga stotram: swipeable pages,
+/// one verse per page, showing Devanāgarī, IAST, and English translation.
+class GaurangaVerseDetailScreen extends StatefulWidget {
+  final List<GaurangaStotraVerse> verses;
   final int initialIndex;
 
-  const PrabhupadaVerseDetailScreen({
+  const GaurangaVerseDetailScreen({
     super.key,
     required this.verses,
     this.initialIndex = 0,
   });
 
   @override
-  State<PrabhupadaVerseDetailScreen> createState() =>
-      _PrabhupadaVerseDetailScreenState();
+  State<GaurangaVerseDetailScreen> createState() =>
+      _GaurangaVerseDetailScreenState();
 }
 
-class _PrabhupadaVerseDetailScreenState
-    extends State<PrabhupadaVerseDetailScreen> {
+class _GaurangaVerseDetailScreenState
+    extends State<GaurangaVerseDetailScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
 
@@ -238,7 +238,7 @@ class _PrabhupadaVerseDetailScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(Translations.t('personality.prabhupada.title')),
+        title: const Text('Śrī Gaurāṅga stotram'),
       ),
       body: Column(
         children: [
@@ -278,6 +278,19 @@ class _PrabhupadaVerseDetailScreenState
                       ],
                     ),
                     const SizedBox(height: 16),
+                    if (v.devanagari.isNotEmpty) ...[
+                      Text(
+                        v.devanagari,
+                        style: TextStyle(
+                          fontSize: 18,
+                          height: 1.9,
+                          color: isDark
+                              ? BssColors.darkOakSanskritText
+                              : BssColors.sanskritText,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                     if (v.transliteration.isNotEmpty) ...[
                       Text(
                         v.transliteration,

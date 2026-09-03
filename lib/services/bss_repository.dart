@@ -6,6 +6,8 @@ import '../models/verse.dart';
 import '../models/danda.dart';
 import '../models/caitanya_stotra_verse.dart';
 import '../models/prabhupada_stotra_verse.dart';
+import '../models/gauranga_stotra_verse.dart';
+import '../models/radhakrsna_stotra_verse.dart';
 import 'translations.dart';
 
 class SubPeriod {
@@ -650,6 +652,27 @@ class BssRepository {
       orderBy: 'sort_order ASC',
     );
     return rows.map(PrabhupadaStotraVerse.fromMap).toList();
+  }
+
+  /// All verses of the Śrī Śrīmad Gaurāṅga-līlā-smaraṇa-maṅgala-stotram
+  /// (104 verses by Śrīla Bhaktivinoda Ṭhākura), in reading order.
+  Future<List<GaurangaStotraVerse>> getGaurangaStotram() async {
+    final List<Map<String, dynamic>> rows = await db.query(
+      'gauranga_stotram',
+      orderBy: 'sort_order ASC',
+    );
+    return rows.map(GaurangaStotraVerse.fromMap).toList();
+  }
+
+  /// All periods of the Śrī Rādhā-Kṛṣṇayoḥ Aṣṭa-kālīya-līlā
+  /// Smaraṇa-maṅgala-śrotram (8 daily periods), each with its verse,
+  /// word-by-word gloss, and English translation, in reading order.
+  Future<List<RadhaKrsnaStotraVerse>> getRadhaKrsnaStotram() async {
+    final List<Map<String, dynamic>> rows = await db.query(
+      'radhakrsna_stotram',
+      orderBy: 'sort_order ASC',
+    );
+    return rows.map(RadhaKrsnaStotraVerse.fromMap).toList();
   }
 
   /// Finds a verse by book slug and verse ref (e.g. 'govinda-lilamrta' + '1.107').
