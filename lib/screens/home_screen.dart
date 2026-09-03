@@ -9,7 +9,7 @@ import 'caitanya_screen.dart';
 import 'prabhupada_screen.dart';
 import 'gauranga_screen.dart';
 import 'radhakrsna_stotra_screen.dart';
-import 'coming_soon_screen.dart';
+import 'manjari_screen.dart';
 import 'works_menu_screen.dart';
 
 /// Entry point showing the four spiritual personalities ("branches") of the
@@ -84,7 +84,7 @@ class _PersonalityHome extends StatelessWidget {
         subtitle: Translations.t('personality.mañjarī.subtitle'),
         imagePath: 'assets/icon/manjari.png',
         icon: Icons.local_florist,
-        enabled: false,
+        enabled: true,
       ),
       _Personality(
         id: 'prabhupada',
@@ -181,11 +181,7 @@ class _PersonalityHome extends StatelessWidget {
       case 'manjari':
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ComingSoonScreen(
-              title: personality.title,
-              subtitle: personality.subtitle,
-              icon: personality.icon,
-            ),
+            builder: (_) => ManjariScreen(repository: repository),
           ),
         );
     }

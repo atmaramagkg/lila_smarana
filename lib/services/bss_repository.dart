@@ -8,6 +8,7 @@ import '../models/caitanya_stotra_verse.dart';
 import '../models/prabhupada_stotra_verse.dart';
 import '../models/gauranga_stotra_verse.dart';
 import '../models/radhakrsna_stotra_verse.dart';
+import '../models/manjari_chapter.dart';
 import 'translations.dart';
 
 class SubPeriod {
@@ -673,6 +674,16 @@ class BssRepository {
       orderBy: 'sort_order ASC',
     );
     return rows.map(RadhaKrsnaStotraVerse.fromMap).toList();
+  }
+
+  /// All chapters of the Manjari Svarupa Nirupana treatise by Śrīla
+  /// Bhaktivinoda Ṭhākura, in reading order. Each chapter is prose.
+  Future<List<ManjariChapter>> getManjariChapters() async {
+    final List<Map<String, dynamic>> rows = await db.query(
+      'manjari_chapters',
+      orderBy: 'sort_order ASC',
+    );
+    return rows.map(ManjariChapter.fromMap).toList();
   }
 
   /// Finds a verse by book slug and verse ref (e.g. 'govinda-lilamrta' + '1.107').
