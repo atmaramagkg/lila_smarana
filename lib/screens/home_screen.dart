@@ -9,6 +9,7 @@ import 'caitanya_screen.dart';
 import 'prabhupada_screen.dart';
 import 'gauranga_screen.dart';
 import 'radhakrsna_stotra_screen.dart';
+import 'bss2_screen.dart';
 import 'manjari_screen.dart';
 import 'works_menu_screen.dart';
 
@@ -197,8 +198,9 @@ class _PersonalityHome extends StatelessWidget {
     }
   }
 
-  /// Rādhā–Kṛṣṇa: two works — the aṣṭa-kālīya stotram and the
-  /// Bhavanasara-sangraha time-of-day reader.
+  /// Rādhā–Kṛṣṇa: three works — the aṣṭa-kālīya stotram and the two
+  /// editions of the Bhavanasara-sangraha (time-of-day reader, and the
+  /// verse-by-verse edition with Devanāgarī and translation).
   void _openRadhaKrsna(BuildContext context, _Personality personality) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -220,6 +222,12 @@ class _PersonalityHome extends StatelessWidget {
                 repository: repository,
                 initialPeriodId: 1,
               ),
+            ),
+            WorkEntry(
+              title: Translations.t('works.radhaKrsna.bss2'),
+              subtitle: Translations.t('works.radhaKrsna.bss2Sub'),
+              icon: Icons.auto_awesome,
+              builder: (_) => Bss2Screen(repository: repository),
             ),
           ],
         ),

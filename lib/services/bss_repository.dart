@@ -9,6 +9,7 @@ import '../models/prabhupada_stotra_verse.dart';
 import '../models/gauranga_stotra_verse.dart';
 import '../models/radhakrsna_stotra_verse.dart';
 import '../models/manjari_chapter.dart';
+import '../models/bss2.dart';
 import 'translations.dart';
 
 class SubPeriod {
@@ -684,6 +685,104 @@ class BssRepository {
       orderBy: 'sort_order ASC',
     );
     return rows.map(ManjariChapter.fromMap).toList();
+  }
+
+  /// Periods of the second Bhavanāsāra-saṅgraha edition
+  /// (Haricaraṇa Dāsa translation) in reading order.
+  Future<List<Bs2Period>> getBs2Periods() async {
+    final rows = await db.query('bss2_periods', orderBy: 'sort_order ASC');
+    return rows.map(Bs2Period.fromMap).toList();
+  }
+
+  /// Sections (time-window subdivisions) of a given second-BSS period.
+  Future<List<Bs2Section>> getBs2Sections(int periodId) async {
+    final rows = await db.query(
+      'bss2_sections',
+      where: 'period_id = ?',
+      whereArgs: [periodId],
+      orderBy: 'sort_order ASC',
+    );
+    return rows.map(Bs2Section.fromMap).toList();
+  }
+
+  /// Chapters of a given second-BSS section in reading order.
+  Future<List<Bs2Chapter>> getBs2Chapters(int sectionId) async {
+    final rows = await db.query(
+      'bss2_chapters',
+      where: 'section_id = ?',
+      whereArgs: [sectionId],
+      orderBy: 'sort_order ASC',
+    );
+    return rows.map(Bs2Chapter.fromMap).toList();
+  }
+
+  /// Verses of a given second-BSS chapter in reading order.
+  Future<List<Bs2Verse>> getBs2Verses(int chapterId) async {
+    final rows = await db.query(
+      'bss2_verses',
+      where: 'chapter_id = ?',
+      whereArgs: [chapterId],
+      orderBy: 'sort_order ASC',
+    );
+    return rows.map(Bs2Verse.fromMap).toList();
+  }
+
+  /// The entire second-BSS book as one ordered continuous-reading feed.
+  /// Period → section → chapter headings are emitted inline, with each
+  /// chapter's verses flowing beneath them, top to bottom. This mirrors the
+  /// Bhanu Swami time-of-day reader, where the reader scrolls continuously
+  /// and the subdivisions appear as headlines in the middle of the text.
+  Future<List<Bs2FeedRow>> getBs2Feed() async {
+    final rows = await db.rawQuery('''
+      SELECT
+        p.id AS period_id, p.title AS period_title,
+        s.id AS section_id, s.title AS section_title,
+        c.id AS chapter_id, c.title AS chapter_title,
+        v.id AS verse_id, v.sort_order AS verse_order,
+        v.devanagari, v.transliteration, v.translation, v.reference
+      FROM bss2_periods p
+      JOIN bss2_sections s ON s.period_id = p.id
+      JOIN bss2_chapters c ON c.section_id = s.id
+      JOIN bss2_verses v ON v.chapter_id = c.id
+      ORDER BY p.sort_order ASC, s.sort_order ASC, c.sort_order ASC, v.sort_order ASC
+    ''');
+
+    final feed = <Bs2FeedRow>[];
+    int? lastPeriodId;
+    int? lastSectionId;
+    int? lastChapterId;
+
+    for (final row in rows) {
+      final periodId = row['period_id'] as int? ?? 0;
+      final sectionId = row['section_id'] as int? ?? 0;
+      final chapterId = row['chapter_id'] as int? ?? 0;
+
+      if (periodId != lastPeriodId) {
+        feed.add(Bs2FeedRow.periodHeading(row['period_title'] as String? ?? ''));
+        lastPeriodId = periodId;
+        lastSectionId = null;
+        lastChapterId = null;
+      }
+      if (sectionId != lastSectionId) {
+        feed.add(Bs2FeedRow.sectionHeading(row['section_title'] as String? ?? ''));
+        lastSectionId = sectionId;
+        lastChapterId = null;
+      }
+      if (chapterId != lastChapterId) {
+        feed.add(Bs2FeedRow.chapterHeading(row['chapter_title'] as String? ?? ''));
+        lastChapterId = chapterId;
+      }
+      feed.add(Bs2FeedRow.verseRow(Bs2Verse(
+        id: row['verse_id'] as int? ?? 0,
+        sortOrder: row['verse_order'] as int? ?? 0,
+        chapterId: chapterId,
+        devanagari: row['devanagari'] as String? ?? '',
+        transliteration: row['transliteration'] as String? ?? '',
+        translation: row['translation'] as String? ?? '',
+        reference: row['reference'] as String? ?? '',
+      )));
+    }
+    return feed;
   }
 
   /// Finds a verse by book slug and verse ref (e.g. 'govinda-lilamrta' + '1.107').
