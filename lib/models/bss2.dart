@@ -127,25 +127,49 @@ class Bs2Verse {
 /// Bhanu Swami time-of-day reader.
 enum Bs2RowType { periodHeading, sectionHeading, chapterHeading, verse }
 
+/// One flattened row of the second-BSS continuous reader feed. Each row
+/// carries the ids of the period and section it belongs to, so the two-level
+/// navigation (period tabs + section chips) can jump straight to the right
+/// spot in the feed. Each row is either a heading (period, section, or
+/// chapter) or a verse.
 class Bs2FeedRow {
   final Bs2RowType type;
+  final int periodId;
+  final int sectionId;
+  final int chapterId;
   final String title; // heading text, or blank for a verse row
   final Bs2Verse? verse;
 
-  const Bs2FeedRow.periodHeading(String t)
-      : type = Bs2RowType.periodHeading,
+  const Bs2FeedRow.periodHeading({
+    required this.periodId,
+    this.sectionId = 0,
+    this.chapterId = 0,
+    required String t,
+  })  : type = Bs2RowType.periodHeading,
         title = t,
         verse = null;
-  const Bs2FeedRow.sectionHeading(String t)
-      : type = Bs2RowType.sectionHeading,
+  const Bs2FeedRow.sectionHeading({
+    required this.periodId,
+    required this.sectionId,
+    this.chapterId = 0,
+    required String t,
+  })  : type = Bs2RowType.sectionHeading,
         title = t,
         verse = null;
-  const Bs2FeedRow.chapterHeading(String t)
-      : type = Bs2RowType.chapterHeading,
+  const Bs2FeedRow.chapterHeading({
+    required this.periodId,
+    required this.sectionId,
+    required this.chapterId,
+    required String t,
+  })  : type = Bs2RowType.chapterHeading,
         title = t,
         verse = null;
-  const Bs2FeedRow.verseRow(Bs2Verse v)
-      : type = Bs2RowType.verse,
+  const Bs2FeedRow.verseRow({
+    required this.periodId,
+    required this.sectionId,
+    required this.chapterId,
+    required Bs2Verse v,
+  })  : type = Bs2RowType.verse,
         title = '',
         verse = v;
 }

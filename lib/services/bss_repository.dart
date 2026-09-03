@@ -758,21 +758,37 @@ class BssRepository {
       final chapterId = row['chapter_id'] as int? ?? 0;
 
       if (periodId != lastPeriodId) {
-        feed.add(Bs2FeedRow.periodHeading(row['period_title'] as String? ?? ''));
+        feed.add(Bs2FeedRow.periodHeading(
+          periodId: periodId,
+          t: row['period_title'] as String? ?? '',
+        ));
         lastPeriodId = periodId;
         lastSectionId = null;
         lastChapterId = null;
       }
       if (sectionId != lastSectionId) {
-        feed.add(Bs2FeedRow.sectionHeading(row['section_title'] as String? ?? ''));
+        feed.add(Bs2FeedRow.sectionHeading(
+          periodId: periodId,
+          sectionId: sectionId,
+          t: row['section_title'] as String? ?? '',
+        ));
         lastSectionId = sectionId;
         lastChapterId = null;
       }
       if (chapterId != lastChapterId) {
-        feed.add(Bs2FeedRow.chapterHeading(row['chapter_title'] as String? ?? ''));
+        feed.add(Bs2FeedRow.chapterHeading(
+          periodId: periodId,
+          sectionId: sectionId,
+          chapterId: chapterId,
+          t: row['chapter_title'] as String? ?? '',
+        ));
         lastChapterId = chapterId;
       }
-      feed.add(Bs2FeedRow.verseRow(Bs2Verse(
+      feed.add(Bs2FeedRow.verseRow(
+        periodId: periodId,
+        sectionId: sectionId,
+        chapterId: chapterId,
+        v: Bs2Verse(
         id: row['verse_id'] as int? ?? 0,
         sortOrder: row['verse_order'] as int? ?? 0,
         chapterId: chapterId,
