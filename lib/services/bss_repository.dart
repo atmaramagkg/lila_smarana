@@ -677,11 +677,17 @@ class BssRepository {
     return rows.map(RadhaKrsnaStotraVerse.fromMap).toList();
   }
 
-  /// All chapters of the Manjari Svarupa Nirupana treatise by Śrīla
-  /// Bhaktivinoda Ṭhākura, in reading order. Each chapter is prose.
-  Future<List<ManjariChapter>> getManjariChapters() async {
+  /// Chapters of a mañjarī treatise, in reading order. Each chapter is prose
+  /// (or verse). Filter by `bookSlug` to read one work: the original
+  /// "Manjari Svarupa Nirupana" ('manjari-svarupa-nirupana', default) or the
+  /// "Anaṅga-mañjarī-sampuṭikā" ('ananga-manjari-samputika').
+  Future<List<ManjariChapter>> getManjariChapters({
+    String bookSlug = 'manjari-svarupa-nirupana',
+  }) async {
     final List<Map<String, dynamic>> rows = await db.query(
       'manjari_chapters',
+      where: bookSlug.isEmpty ? null : 'book_slug = ?',
+      whereArgs: bookSlug.isEmpty ? null : [bookSlug],
       orderBy: 'sort_order ASC',
     );
     return rows.map(ManjariChapter.fromMap).toList();

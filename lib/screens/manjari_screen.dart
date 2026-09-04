@@ -8,14 +8,23 @@ import '../services/bss_repository.dart';
 import '../services/translations.dart';
 import '../widgets/app_menu_sheet.dart';
 
-/// The Mañjarī Sevā branch: "Manjari Svarupa Nirupana", an 11-chapter prose
-/// treatise by Śrīla Bhaktivinoda Ṭhākura on the identity and loving service
-/// of the mañjarīs. The list pane shows the chapter titles; tapping one
-/// opens the chapter's full prose text.
+/// The Mañjarī Sevā branch reader. Shows the chapters of one mañjarī
+/// work as a list; tapping a chapter opens a full-text reader.
+///
+/// [bookSlug] selects which work's chapters are shown — either the
+/// "Manjari Svarupa Nirupana" treatise (default) or the
+/// "Anaṅga-mañjarī-sampuṭikā". [title] is shown in the app bar.
 class ManjariScreen extends StatefulWidget {
   final BssRepository repository;
+  final String bookSlug;
+  final String title;
 
-  const ManjariScreen({super.key, required this.repository});
+  const ManjariScreen({
+    super.key,
+    required this.repository,
+    this.bookSlug = 'manjari-svarupa-nirupana',
+    this.title = '',
+  });
 
   @override
   State<ManjariScreen> createState() => _ManjariScreenState();
@@ -28,7 +37,8 @@ class _ManjariScreenState extends State<ManjariScreen> {
   @override
   void initState() {
     super.initState();
-    _future = widget.repository.getManjariChapters().then((v) {
+    _future =
+        widget.repository.getManjariChapters(bookSlug: widget.bookSlug).then((v) {
       if (mounted) setState(() => _chapters = v);
       return v;
     });
@@ -43,7 +53,9 @@ class _ManjariScreenState extends State<ManjariScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(Translations.t('personality.mañjarī.title')),
+        title: Text(widget.title.isNotEmpty
+            ? widget.title
+            : Translations.t('personality.mañjarī.title')),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),

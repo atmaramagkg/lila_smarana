@@ -191,6 +191,17 @@ class _PersonalityHome extends StatelessWidget {
                   icon: Icons.menu_book,
                   builder: (_) => ManjariScreen(repository: repository),
                 ),
+                WorkEntry(
+                  title: Translations.t('works.manjari.anangaSamputika'),
+                  subtitle: Translations.t('works.manjari.anangaSamputikaSub'),
+                  icon: Icons.auto_awesome,
+                  builder: (_) => ManjariScreen(
+                    repository: repository,
+                    bookSlug: 'ananga-manjari-samputika',
+                    title:
+                        Translations.t('works.manjari.anangaSamputika'),
+                  ),
+                ),
               ],
             ),
           ),
