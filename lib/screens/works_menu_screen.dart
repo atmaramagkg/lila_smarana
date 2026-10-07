@@ -10,11 +10,17 @@ class WorkEntry {
   final IconData icon;
   final WidgetBuilder builder;
 
+  /// Optional async launcher. When set, it takes precedence over [builder]
+  /// and lets the work decide how it opens (e.g. resolve the current
+  /// time-of-day period before pushing its reader).
+  final Future<void> Function(BuildContext context)? onTap;
+
   const WorkEntry({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.builder,
+    this.onTap,
   });
 }
 
@@ -81,9 +87,16 @@ class WorksMenuScreen extends StatelessWidget {
                   size: 18,
                   color: goldColor.withAlpha(200),
                 ),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: work.builder),
-                ),
+                onTap: () {
+                  final onTap = work.onTap;
+                  if (onTap != null) {
+                    onTap(context);
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: work.builder),
+                    );
+                  }
+                },
               ),
             );
           },

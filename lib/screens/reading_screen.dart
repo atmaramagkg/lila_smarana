@@ -52,7 +52,10 @@ class _ReadingScreenState extends State<ReadingScreen> {
   String? _highlightQuery;
   String _lastSearchQuery = '';
   final GlobalKey _highlightedQuoteKey = GlobalKey();
-  final ScrollController _subPeriodScrollController = ScrollController();
+  final ItemScrollController _subPeriodItemScrollController =
+      ItemScrollController();
+  final ItemPositionsListener _subPeriodItemPositionsListener =
+      ItemPositionsListener.create();
   bool _isLoading = true;
   bool _isProgrammaticScroll = false;
 
@@ -67,7 +70,6 @@ class _ReadingScreenState extends State<ReadingScreen> {
   @override
   void dispose() {
     _itemPositionsListener.itemPositions.removeListener(_onPositionsChanged);
-    _subPeriodScrollController.dispose();
     super.dispose();
   }
 
@@ -183,19 +185,18 @@ class _ReadingScreenState extends State<ReadingScreen> {
     _scrollSubPeriodBarToSelected();
   }
 
+  /// Brings the selected sub-period chip into focus by scrolling it to the
+  /// center of the Level-2 bar (ScrollablePositionedList scrolls by item index,
+  /// so it works even when the chip hasn't been built yet).
   void _scrollSubPeriodBarToSelected() {
-    if (!_subPeriodScrollController.hasClients) return;
+    if (!_subPeriodItemScrollController.isAttached) return;
     final index = _currentSubPeriods.indexWhere(
       (s) => s.id == _selectedSubPeriodId,
     );
     if (index == -1) return;
-    // Each sub-period chip is roughly 80px wide (padding + margin + text).
-    final targetOffset = (index * 80.0) - 80.0;
-    _subPeriodScrollController.animateTo(
-      targetOffset.clamp(
-        0.0,
-        _subPeriodScrollController.position.maxScrollExtent,
-      ),
+    _subPeriodItemScrollController.scrollTo(
+      index: index,
+      alignment: 0.5,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
     );
@@ -713,39 +714,47 @@ class _ReadingScreenState extends State<ReadingScreen> {
                     const SizedBox(height: 6),
                     SizedBox(
                       height: 34,
-                      child: ListView.builder(
-                        controller: _subPeriodScrollController,
+child: ScrollablePositionedList.builder(
+                        itemScrollController: _subPeriodItemScrollController,
+                        itemPositionsListener: _subPeriodItemPositionsListener,
                         scrollDirection: Axis.horizontal,
                         itemCount: _currentSubPeriods.length,
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        itemBuilder: (context, index) {
-                          final sub = _currentSubPeriods[index];
-                          final isSelected = (sub.id == _selectedSubPeriodId);
+                  itemBuilder: (context, index) {
+                    final sub = _currentSubPeriods[index];
+                    final isSelected = (sub.id == _selectedSubPeriodId);
 
-                          return GestureDetector(
-                            onTap: () => _onSubPeriodSelected(sub.id),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-                              margin: const EdgeInsets.symmetric(horizontal: 2.0),
-                              decoration: BoxDecoration(
-                                color: isSelected ? goldColor.withAlpha(64) : Colors.transparent,
-                                borderRadius: BorderRadius.circular(14.0),
-                                border: Border.all(color: isSelected ? goldColor : goldColor.withAlpha(76), width: 1.0),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  sub.timeRange.isNotEmpty ? sub.timeRange : '${index + 1}',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: isSelected ? goldColor : textColor,
-                                  ),
-                                ),
-                              ),
+                    return GestureDetector(
+                      onTap: () => _onSubPeriodSelected(sub.id),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? goldColor
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(14.0),
+                          border: Border.all(
+                            color: isSelected ? goldColor : goldColor.withAlpha(76),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            sub.timeRange.isNotEmpty ? sub.timeRange : '${index + 1}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected
+                                  ? (isDark ? BssColors.darkOakBg : Colors.white)
+                                  : textColor,
                             ),
-                          );
-                        },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                       ),
                     ),
                   ],

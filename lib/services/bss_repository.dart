@@ -678,9 +678,8 @@ class BssRepository {
   }
 
   /// Chapters of a mañjarī treatise, in reading order. Each chapter is prose
-  /// (or verse). Filter by `bookSlug` to read one work: the original
-  /// "Manjari Svarupa Nirupana" ('manjari-svarupa-nirupana', default) or the
-  /// "Anaṅga-mañjarī-sampuṭikā" ('ananga-manjari-samputika').
+  /// (or verse). Filter by `bookSlug` to read one work; defaults to the
+  /// "Manjari Svarupa Nirupana" ('manjari-svarupa-nirupana').
   Future<List<ManjariChapter>> getManjariChapters({
     String bookSlug = 'manjari-svarupa-nirupana',
   }) async {

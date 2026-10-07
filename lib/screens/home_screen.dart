@@ -191,22 +191,28 @@ class _PersonalityHome extends StatelessWidget {
                   icon: Icons.menu_book,
                   builder: (_) => ManjariScreen(repository: repository),
                 ),
-                WorkEntry(
-                  title: Translations.t('works.manjari.anangaSamputika'),
-                  subtitle: Translations.t('works.manjari.anangaSamputikaSub'),
-                  icon: Icons.auto_awesome,
-                  builder: (_) => ManjariScreen(
-                    repository: repository,
-                    bookSlug: 'ananga-manjari-samputika',
-                    title:
-                        Translations.t('works.manjari.anangaSamputika'),
-                  ),
-                ),
               ],
             ),
           ),
         );
     }
+  }
+
+  /// Opens BSS v1 at the main + sub period the clock says it is right now,
+  /// mirroring the bss project's time-of-day reader. Falls back to period 1
+  /// when the current-time lookup fails.
+  Future<void> _openBss1AtCurrentTime(BuildContext context) async {
+    final pair = await repository.getCurrentPeriodPair();
+    if (!context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ReadingScreen(
+          repository: repository,
+          initialPeriodId: pair?.mainPeriodId ?? 1,
+          initialSubPeriodId: pair?.subPeriodId,
+        ),
+      ),
+    );
   }
 
   /// Rādhā–Kṛṣṇa: three works — the aṣṭa-kālīya stotram and the two
@@ -233,6 +239,7 @@ class _PersonalityHome extends StatelessWidget {
                 repository: repository,
                 initialPeriodId: 1,
               ),
+              onTap: _openBss1AtCurrentTime,
             ),
             WorkEntry(
               title: Translations.t('works.radhaKrsna.bss2'),

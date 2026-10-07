@@ -59,6 +59,10 @@ class _Bss2ScreenState extends State<Bss2Screen> {
   int _selectedSectionId = -1;
   bool _sectionsLoading = false;
 
+  /// True while a navigation-driven animated scroll is running, so the item
+  /// position listener doesn't fight the button selection mid-animation.
+  bool _isProgrammaticScroll = false;
+
   /// Running chapter number (1-based across the whole book) and the feed
   /// index of each chapter heading, keyed by chapter id. Built from the feed.
   final Map<int, int> _chapterNumbers = {};
@@ -98,9 +102,12 @@ class _Bss2ScreenState extends State<Bss2Screen> {
     _itemPositionsListener.itemPositions.addListener(_updateCurrentChapter);
   }
 
-  /// Tracks the chapter whose heading is nearest the top of the feed so the
-  /// right rail can highlight the current reading position.
+  /// Tracks the chapter whose heading is nearest the top of the feed. When the
+  /// user scrolls manually, the selected period, section and chapter follow, so
+  /// the period tabs, section chips and right rail stay in sync (e.g. scrolling
+  /// past the last Niśānta text into Prātar-līlā moves the highlights).
   void _updateCurrentChapter() {
+    if (_isProgrammaticScroll) return;
     final positions = _itemPositionsListener.itemPositions.value
         .where((p) => p.index >= 0 && p.index < _feed.length)
         .toList();
@@ -108,17 +115,30 @@ class _Bss2ScreenState extends State<Bss2Screen> {
     // Topmost visible item.
     positions.sort((a, b) => a.itemLeadingEdge.compareTo(b.itemLeadingEdge));
     final first = positions.first.index;
-    int selected = -1;
+    int selectedPeriod = _selectedPeriodId;
+    int selectedSection = _selectedSectionId;
+    int selectedChapter = _currentChapterId;
     for (int i = first; i >= 0; i--) {
       final row = _feed[i];
       if (row.type == Bs2RowType.chapterHeading) {
-        selected = row.chapterId;
+        selectedPeriod = row.periodId;
+        selectedSection = row.sectionId;
+        selectedChapter = row.chapterId;
         break;
       }
     }
-    if (selected != _currentChapterId) {
-      setState(() => _currentChapterId = selected);
+    if (selectedPeriod == _selectedPeriodId &&
+        selectedSection == _selectedSectionId &&
+        selectedChapter == _currentChapterId) {
+      return;
     }
+    if (!mounted) return;
+    setState(() {
+      _selectedPeriodId = selectedPeriod;
+      _selectedSectionId = selectedSection;
+      _currentChapterId = selectedChapter;
+      _rebuildSelectedChapters();
+    });
   }
 
   @override
@@ -184,41 +204,53 @@ class _Bss2ScreenState extends State<Bss2Screen> {
     _scrollToSection(_selectedSectionId);
   }
 
-  void _scrollToChapter(int chapterId) {
+  Future<void> _scrollToChapter(int chapterId) {
     final index = _chapterFeedIndexes[chapterId];
-    if (index == null) return;
-    _itemScrollController.scrollTo(
-      index: index,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-      alignment: 0.0,
-    );
+    if (index == null) return Future.value();
+    return _runProgrammaticScroll(() => _itemScrollController.scrollTo(
+          index: index,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          alignment: 0.0,
+        ));
   }
 
-  void _scrollToPeriod(int periodId) {
+  Future<void> _scrollToPeriod(int periodId) {
     final index = _feed.indexWhere(
         (r) => r.periodId == periodId && r.type == Bs2RowType.periodHeading);
-    if (index >= 0) {
-      _itemScrollController.scrollTo(
-        index: index,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-        alignment: 0.0,
-      );
-    }
+    if (index < 0) return Future.value();
+    return _runProgrammaticScroll(() => _itemScrollController.scrollTo(
+          index: index,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          alignment: 0.0,
+        ));
   }
 
-  void _scrollToSection(int sectionId) {
+  Future<void> _scrollToSection(int sectionId) {
     final index = _feed.indexWhere(
         (r) => r.sectionId == sectionId && r.type == Bs2RowType.sectionHeading);
-    if (index >= 0) {
-      _itemScrollController.scrollTo(
-        index: index,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-        alignment: 0.0,
-      );
+    if (index < 0) return Future.value();
+    return _runProgrammaticScroll(() => _itemScrollController.scrollTo(
+          index: index,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          alignment: 0.0,
+        ));
+  }
+
+  /// Runs a navigation-driven animated scroll with the position listener muted
+  /// while the list moves, then re-syncs the selection once it has settled.
+  Future<void> _runProgrammaticScroll(
+      Future<void> Function() action) async {
+    _isProgrammaticScroll = true;
+    try {
+      await action();
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    } finally {
+      _isProgrammaticScroll = false;
     }
+    _updateCurrentChapter();
   }
 
   void _shareAll() {
@@ -245,16 +277,26 @@ class _Bss2ScreenState extends State<Bss2Screen> {
   }
 
   void _openVerseDetail(Bs2Verse verse) {
-    final verses = _feed
-        .where((r) => r.type == Bs2RowType.verse)
-        .map((r) => r.verse!)
-        .toList();
+    final verseRows = _feed.where((r) => r.type == Bs2RowType.verse).toList();
+    final verses = verseRows.map((r) => r.verse!).toList();
+    final periodTotals = <int, int>{};
+    final positionInPeriod = <int>[];
+    final pagePeriodIds = <int>[];
+    for (final r in verseRows) {
+      final p = r.periodId;
+      pagePeriodIds.add(p);
+      positionInPeriod.add((periodTotals[p] ?? 0) + 1);
+      periodTotals[p] = (periodTotals[p] ?? 0) + 1;
+    }
     final initialIndex = verses.indexWhere((v) => v.id == verse.id);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => Bss2VerseDetailScreen(
           verses: verses,
           initialIndex: initialIndex < 0 ? 0 : initialIndex,
+          positionInPeriod: positionInPeriod,
+          pagePeriodIds: pagePeriodIds,
+          periodTotals: periodTotals,
         ),
       ),
     );
@@ -615,7 +657,9 @@ class _Bss2ScreenState extends State<Bss2Screen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                verse.translation,
+                verse.translation.isNotEmpty
+                    ? verse.translation
+                    : verse.transliteration,
                 style: TextStyle(
                   color: textColor,
                   fontSize: 14,
@@ -647,11 +691,17 @@ class _Bss2ScreenState extends State<Bss2Screen> {
 class Bss2VerseDetailScreen extends StatefulWidget {
   final List<Bs2Verse> verses;
   final int initialIndex;
+  final List<int> positionInPeriod;
+  final List<int> pagePeriodIds;
+  final Map<int, int> periodTotals;
 
   const Bss2VerseDetailScreen({
     super.key,
     required this.verses,
     this.initialIndex = 0,
+    this.positionInPeriod = const [],
+    this.pagePeriodIds = const [],
+    this.periodTotals = const {},
   });
 
   @override
@@ -661,6 +711,21 @@ class Bss2VerseDetailScreen extends StatefulWidget {
 class _Bss2VerseDetailScreenState extends State<Bss2VerseDetailScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
+
+  int _counterPosition() {
+    if (widget.positionInPeriod.length > _currentPage) {
+      return widget.positionInPeriod[_currentPage];
+    }
+    return _currentPage + 1;
+  }
+
+  int _counterTotal() {
+    if (widget.pagePeriodIds.length > _currentPage) {
+      final total = widget.periodTotals[widget.pagePeriodIds[_currentPage]];
+      if (total != null) return total;
+    }
+    return widget.verses.length;
+  }
 
   @override
   void initState() {
@@ -736,14 +801,17 @@ class _Bss2VerseDetailScreenState extends State<Bss2VerseDetailScreen> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                    Text(
-                      v.translation,
-                      style: TextStyle(
-                        fontSize: 17,
-                        height: 1.5,
-                        color: textColor,
+                    if (v.translation.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Text(
+                        v.translation,
+                        style: TextStyle(
+                          fontSize: 17,
+                          height: 1.5,
+                          color: textColor,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 );
               },
@@ -773,7 +841,7 @@ class _Bss2VerseDetailScreenState extends State<Bss2VerseDetailScreen> {
                     style: TextButton.styleFrom(foregroundColor: goldColor),
                   ),
                   Text(
-                    '${_currentPage + 1} / ${widget.verses.length}',
+                    '${_counterPosition()} / ${_counterTotal()}',
                     style: TextStyle(color: subText, fontSize: 13),
                   ),
                   TextButton.icon(
