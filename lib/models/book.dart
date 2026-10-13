@@ -5,6 +5,7 @@ class Book {
   final String title;
   final String author;
   final int quoteCount;
+  final bool hasFullText;
 
   const Book({
     required this.id,
@@ -12,5 +13,6 @@ class Book {
     required this.title,
     required this.author,
     this.quoteCount = 0,
+    this.hasFullText = false,
   });
 }

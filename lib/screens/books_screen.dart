@@ -5,6 +5,7 @@ import '../models/book.dart';
 import '../services/bss_repository.dart';
 import '../services/translations.dart';
 import 'book_reader_screen.dart';
+import 'book_chapters_screen.dart';
 
 /// All source scriptures this compilation quotes from.
 class BooksScreen extends StatelessWidget {
@@ -41,6 +42,9 @@ class BooksScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final Book b = books[index];
                 return ListTile(
+                  leading: b.hasFullText
+                      ? Icon(Icons.auto_stories, color: goldColor)
+                      : null,
                   title: Text(
                     b.title,
                     style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
@@ -54,7 +58,9 @@ class BooksScreen extends StatelessWidget {
                       : null,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => BookReaderScreen(repository: repository, book: b),
+                      builder: (_) => b.hasFullText
+                          ? BookChaptersScreen(repository: repository, book: b)
+                          : BookReaderScreen(repository: repository, book: b),
                     ),
                   ),
                 );

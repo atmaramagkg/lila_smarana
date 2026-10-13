@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'language_code.dart';
@@ -27,6 +28,18 @@ class AppDatabase {
   static const String _dbFileName = 'bhavanasara_unified.db';
 
   Database? _db;
+
+  /// Directory where the writable copy of the database is stored.
+  /// On mobile this is the standard databases path; on desktop the app is
+  /// usually installed under Program Files (read-only), so we use the
+  /// per-user application-support directory instead.
+  static Future<String> _databaseDirectory() async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      return getDatabasesPath();
+    }
+    final Directory dir = await getApplicationSupportDirectory();
+    return dir.path;
+  }
 
   /// Languages available in the unified database.
   /// Hindi data exists but is temporarily excluded from the UI.
@@ -57,7 +70,7 @@ class AppDatabase {
   Future<void> init() async {
     if (_db != null) return;
 
-    final String path = join(await getDatabasesPath(), _dbFileName);
+    final String path = join(await _databaseDirectory(), _dbFileName);
 
     final ByteData data = await rootBundle.load(_assetPath);
     final bytes =

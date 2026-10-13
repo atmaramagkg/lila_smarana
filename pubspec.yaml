@@ -1,7 +1,7 @@
 name: lila_smarana
 description: "Quotes form 30 scriptures related to Asta-kaliya Lila."
 publish_to: 'none' 
-version: 0.80.0+1
+version: 0.88.0+1
 
 environment:
   sdk: ^3.12.2
@@ -34,6 +34,10 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
+  windows:
+    generate: true
+    image_path: "assets/icon/AppLogo.png"
+    icon_size: 256
 
 flutter:
   uses-material-design: true

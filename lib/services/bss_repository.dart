@@ -9,6 +9,7 @@ import '../models/prabhupada_stotra_verse.dart';
 import '../models/gauranga_stotra_verse.dart';
 import '../models/radhakrsna_stotra_verse.dart';
 import '../models/manjari_chapter.dart';
+import '../models/book_chapter.dart';
 import '../models/bss2.dart';
 import 'translations.dart';
 
@@ -508,7 +509,7 @@ class BssRepository {
   /// All source scriptures, with how many verses cite each one.
   Future<List<Book>> getAllBooks() async {
     final String langCode = await _currentLanguageCode();
-    final query = '''
+    final String columns = '''
       SELECT
         b.id,
         b.slug,
@@ -524,21 +525,80 @@ class BssRepository {
         ) AS author,
         (SELECT COUNT(*) FROM verses v WHERE v.book_id = b.id) AS verse_count
       FROM books b
-      WHERE (SELECT COUNT(*) FROM verses v WHERE v.book_id = b.id) > 0
-      ORDER BY title ASC;
     ''';
 
-    final List<Map<String, dynamic>> results = await db.rawQuery(query);
+    // Include books that have full-text chapters even if the compilation
+    // never quotes them. Older database copies may lack `book_chapters`,
+    // so fall back to the quotes-only query in that case.
+    List<Map<String, dynamic>> results;
+    try {
+      results = await db.rawQuery('''
+        $columns
+        WHERE (SELECT COUNT(*) FROM verses v WHERE v.book_id = b.id) > 0
+           OR b.id IN (SELECT DISTINCT book_id FROM book_chapters)
+        ORDER BY title ASC;
+      ''');
+    } catch (_) {
+      results = await db.rawQuery('''
+        $columns
+        WHERE (SELECT COUNT(*) FROM verses v WHERE v.book_id = b.id) > 0
+        ORDER BY title ASC;
+      ''');
+    }
+
+    final Set<int> withFullText = await _bookIdsWithFullText();
 
     return results.map((row) {
+      final int id = (row['id'] as int?) ?? 0;
       return Book(
-        id: (row['id'] as int?) ?? 0,
+        id: id,
         slug: (row['slug'] as String?) ?? '',
         title: (row['title'] as String?) ?? '',
         author: (row['author'] as String?) ?? '',
         quoteCount: (row['verse_count'] as int?) ?? 0,
+        hasFullText: withFullText.contains(id),
       );
     }).toList();
+  }
+
+  /// Ids of books that have full-text chapters in `book_chapters`.
+  /// Returns an empty set if the table is missing (older database copies),
+  /// so the Book pane still works.
+  Future<Set<int>> _bookIdsWithFullText() async {
+    try {
+      final rows = await db.rawQuery('SELECT DISTINCT book_id FROM book_chapters');
+      return rows.map((r) => r['book_id'] as int).toSet();
+    } catch (_) {
+      return <int>{};
+    }
+  }
+
+  /// Full-text chapters of a book in reading order. Falls back to English when
+  /// no chapters exist in the requested language. Returns empty if the book has
+  /// no full text (or the table is absent).
+  Future<List<BookChapter>> getBookChapters(
+    int bookId, {
+    String lang = 'en',
+  }) async {
+    try {
+      List<Map<String, dynamic>> rows = await db.query(
+        'book_chapters',
+        where: 'book_id = ? AND lang = ?',
+        whereArgs: [bookId, lang],
+        orderBy: 'sort_order ASC',
+      );
+      if (rows.isEmpty && lang != 'en') {
+        rows = await db.query(
+          'book_chapters',
+          where: 'book_id = ? AND lang = ?',
+          whereArgs: [bookId, 'en'],
+          orderBy: 'sort_order ASC',
+        );
+      }
+      return rows.map(BookChapter.fromMap).toList();
+    } catch (_) {
+      return const [];
+    }
   }
 
   /// A single book's title.

@@ -578,10 +578,20 @@ class _ReadingScreenState extends State<ReadingScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leadingWidth: 84,
+        leadingWidth: 120,
         leading: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => Navigator.of(context).maybePop(),
+              color: goldColor,
+              iconSize: 20,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+              visualDensity: VisualDensity.compact,
+            ),
             IconButton(
               icon: const Icon(Icons.access_time),
               tooltip: Translations.t('common.periods'),

@@ -63,7 +63,7 @@ class _Bss2ScreenState extends State<Bss2Screen> {
   /// position listener doesn't fight the button selection mid-animation.
   bool _isProgrammaticScroll = false;
 
-  /// Running chapter number (1-based across the whole book) and the feed
+  /// Running chapter number (1-based within each main period) and the feed
   /// index of each chapter heading, keyed by chapter id. Built from the feed.
   final Map<int, int> _chapterNumbers = {};
   final Map<int, int> _chapterFeedIndexes = {};
@@ -126,6 +126,24 @@ class _Bss2ScreenState extends State<Bss2Screen> {
         selectedChapter = row.chapterId;
         break;
       }
+      // When the topmost heading is a period/section start, the nearest
+      // chapter lies *below* it, so select that period/section's first
+      // chapter rather than falling back to the previous period's last
+      // chapter (which would undo an explicit period-tab tap).
+      if (row.type == Bs2RowType.periodHeading) {
+        selectedPeriod = row.periodId;
+        final ch = _firstChapterOf(row.periodId, null, i + 1);
+        selectedSection = ch?.sectionId ?? selectedSection;
+        selectedChapter = ch?.chapterId ?? -1;
+        break;
+      }
+      if (row.type == Bs2RowType.sectionHeading) {
+        selectedPeriod = row.periodId;
+        selectedSection = row.sectionId;
+        final ch = _firstChapterOf(row.periodId, row.sectionId, i + 1);
+        selectedChapter = ch?.chapterId ?? -1;
+        break;
+      }
     }
     if (selectedPeriod == _selectedPeriodId &&
         selectedSection == _selectedSectionId &&
@@ -139,6 +157,32 @@ class _Bss2ScreenState extends State<Bss2Screen> {
       _currentChapterId = selectedChapter;
       _rebuildSelectedChapters();
     });
+  }
+
+  /// The first chapter heading at/after [fromIndex] belonging to [periodId]
+  /// (and [sectionId] when given), used to resolve the selection when a
+  /// period/section heading sits at the top of the feed.
+  Bs2FeedRow? _firstChapterOf(int periodId, int? sectionId, int fromIndex) {
+    for (int i = fromIndex; i < _feed.length; i++) {
+      final row = _feed[i];
+      if (row.type == Bs2RowType.chapterHeading) {
+        if (sectionId == null) {
+          if (row.periodId == periodId) return row;
+        } else if (row.sectionId == sectionId) {
+          return row;
+        }
+        continue;
+      }
+      if (row.type == Bs2RowType.periodHeading && row.periodId != periodId) {
+        return null;
+      }
+      if (row.type == Bs2RowType.sectionHeading &&
+          sectionId != null &&
+          row.sectionId != sectionId) {
+        return null;
+      }
+    }
+    return null;
   }
 
   @override
@@ -162,17 +206,19 @@ class _Bss2ScreenState extends State<Bss2Screen> {
     _onSectionTapped(_selectedSectionId);
   }
 
-  /// Walks the loaded feed, assigning a running (1-based) chapter number to each
-  /// chapter heading and recording its feed index.
+  /// Walks the loaded feed, assigning a running (1-based) chapter number to
+  /// each chapter heading — restarting at 1 for every main period — and
+  /// recording its feed index.
   void _buildChapterIndex() {
     _chapterNumbers.clear();
     _chapterFeedIndexes.clear();
-    int running = 0;
+    final Map<int, int> runningByPeriod = {};
     for (int i = 0; i < _feed.length; i++) {
       final row = _feed[i];
       if (row.type == Bs2RowType.chapterHeading) {
-        running++;
-        _chapterNumbers[row.chapterId] = running;
+        final next = (runningByPeriod[row.periodId] ?? 0) + 1;
+        runningByPeriod[row.periodId] = next;
+        _chapterNumbers[row.chapterId] = next;
         _chapterFeedIndexes[row.chapterId] = i;
       }
     }
