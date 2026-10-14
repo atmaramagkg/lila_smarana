@@ -215,7 +215,7 @@ class BookChapterReader extends StatelessWidget {
       appBar: AppBar(title: Text(chapter.title)),
       body: ListView.builder(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        itemCount: paragraphs.length,
+        itemCount: paragraphs.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
@@ -234,7 +234,7 @@ class BookChapterReader extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
-              paragraphs[index],
+              paragraphs[index - 1],
               style: TextStyle(
                 fontSize: 15,
                 height: 1.6,
