@@ -193,17 +193,81 @@ class _BookChaptersScreenState extends State<BookChaptersScreen> {
 }
 
 /// Scrollable prose reader for a single chapter of a source scripture. The
-/// chapter text is split on blank lines into paragraphs.
+/// chapter text is split on blank lines into paragraphs, and each paragraph
+/// is coloured by script: the Sanskrit mūla (and Sanskrit commentary) in the
+/// warm brown accent, the English translation in the plain body colour —
+/// matching the aṣṭa-kālīya-smaraṇa reader.
 class BookChapterReader extends StatelessWidget {
   final BookChapter chapter;
 
   const BookChapterReader({super.key, required this.chapter});
+
+  /// IAST diacritic letters (both cases) that mark romanized Sanskrit.
+  static const Set<String> _iastDiacritics = {
+    'ā', 'ī', 'ū', 'ṛ', 'ṝ', 'ḷ', 'ḹ', 'ē', 'ō', 'ĕ', 'ŏ',
+    'ṃ', 'ṁ', 'ḥ', 'ś', 'ṣ', 'ṭ', 'ḍ', 'ṇ', 'ñ', 'ṅ', 'ç', 'ä', 'ë', 'ï',
+    'Ā', 'Ī', 'Ū', 'Ṛ', 'Ṝ', 'Ḷ', 'Ḹ', 'Ē', 'Ō',
+    'Ṃ', 'Ṁ', 'Ḥ', 'Ś', 'Ṣ', 'Ṭ', 'Ḍ', 'Ṇ', 'Ñ', 'Ṅ', 'Ç', 'Ä', 'Ë', 'Ï',
+  };
+
+  /// High-frequency English function words. Sanskrit transliteration almost
+  /// never contains these as standalone tokens, so two or more hits are a
+  /// reliable signal that a paragraph is an English translation.
+  static const List<String> _englishStopWords = [
+    'the', 'and', 'of', 'to', 'is', 'in', 'that', 'with', 'his', 'her',
+    'he', 'she', 'by', 'as', 'for', 'was', 'were', 'are', 'who', 'which',
+    'not', 'from', 'this', 'these', 'those', 'it', 'its', 'be', 'been',
+    'on', 'at', 'or', 'but', 'when', 'then', 'you', 'your', 'we', 'our',
+    'they', 'their', 'will', 'shall', 'have', 'has', 'had', 'him', 'me',
+    'my', 'an', 'do', 'does', 'did', 'there', 'here', 'what', 'why', 'how',
+    'upon', 'into', 'over', 'out', 'up', 'down', 'also', 'more', 'most',
+    'such', 'than', 'only', 'even', 'like', 'one', 'two', 'all', 'any',
+    'can', 'may', 'must', 'so', 'if', 'no', 'yes',
+  ];
+
+  /// True when [paragraph] reads as an English translation rather than
+  /// Sanskrit mūla or Sanskrit commentary.
+  static bool isEnglish(String paragraph) {
+    if (paragraph.isEmpty) return false;
+    if (RegExp(r'[\u0900-\u097F]').hasMatch(paragraph)) return false; // Devanāgarī
+
+    var letters = 0;
+    var diacritics = 0;
+    for (final rune in paragraph.runes) {
+      final ch = String.fromCharCode(rune);
+      if (RegExp(r'[A-Za-z]').hasMatch(ch)) {
+        letters++;
+      } else if (_iastDiacritics.contains(ch)) {
+        letters++;
+        diacritics++;
+      } else if (rune >= 0x0300 && rune <= 0x036F) {
+        diacritics++;
+      }
+    }
+    if (letters == 0) return false;
+
+    final padded = ' ${paragraph.toLowerCase()} ';
+    var hits = 0;
+    for (final w in _englishStopWords) {
+      if (padded.contains(' $w ')) hits++;
+    }
+    // Strong English signal takes precedence over incidental IAST names.
+    if (hits >= 2) return true;
+    // Heavy diacritic density means romanized Sanskrit.
+    if (diacritics / letters > 0.06) return false;
+    // No diacritics at all and not flagged above — treat as English prose.
+    if (diacritics == 0) return true;
+    // A single function word alongside a few diacritics still reads English.
+    return hits >= 1;
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final goldColor = isDark ? BssColors.darkOakGold : BssColors.goldAccent;
     final textColor = isDark ? BssColors.darkOakText : BssColors.darkText;
+    final sanskritColor =
+        isDark ? BssColors.darkOakSanskritText : BssColors.sanskritText;
 
     final paragraphs = chapter.content
         .split('\n\n')
@@ -231,19 +295,53 @@ class BookChapterReader extends StatelessWidget {
               ),
             );
           }
+          final paragraph = paragraphs[index - 1];
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              paragraphs[index - 1],
-              style: TextStyle(
-                fontSize: 15,
-                height: 1.6,
-                color: textColor,
-              ),
-            ),
+            child: _styledParagraph(paragraph, sanskritColor, textColor),
           );
         },
       ),
+    );
+  }
+
+  /// Builds a paragraph where each line is coloured by script, so a block that
+  /// mixes Sanskrit (Devanāgarī / IAST) and its English rendering — as in the
+  /// Bhāgavatam chapters, where the reference and translation share a line
+  /// range — gets the Sanskrit in the warm brown accent and the English in the
+  /// plain body colour.
+  static Widget _styledParagraph(
+    String paragraph,
+    Color sanskritColor,
+    Color textColor,
+  ) {
+    final lines = paragraph.split('\n');
+    if (lines.length == 1) {
+      final line = lines.first;
+      return Text(
+        line,
+        style: TextStyle(
+          fontSize: 15,
+          height: 1.6,
+          color: isEnglish(line) ? textColor : sanskritColor,
+        ),
+      );
+    }
+    final spans = <InlineSpan>[];
+    for (var i = 0; i < lines.length; i++) {
+      spans.add(
+        TextSpan(
+          text: lines[i],
+          style: TextStyle(
+            color: isEnglish(lines[i]) ? textColor : sanskritColor,
+          ),
+        ),
+      );
+      if (i < lines.length - 1) spans.add(const TextSpan(text: '\n'));
+    }
+    return Text.rich(
+      TextSpan(children: spans),
+      style: const TextStyle(fontSize: 15, height: 1.6),
     );
   }
 }

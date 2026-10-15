@@ -3,7 +3,7 @@
 ; Then compile:         ISCC.exe windows\installer\lila_smarana.iss
 
 #define AppName "Lila Smarana"
-#define  AppVersion "0.90.0"
+#define  AppVersion "0.96.0"
 #define AppPublisher "Lila Smarana"
 #define AppExeName "lila_smarana.exe"
 #define SourceDir "..\..\build\windows\x64\runner\Release"
